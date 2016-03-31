@@ -38,9 +38,14 @@ class AsyncIO:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.modified_config)
             while True:
                 char = os.read(self.fd,7)
-                sys.stdout.write(char)
-                sys.stdout.flush()
-                if char == "\n":    # done
+                if ord(char) == 127: # backspace
+                    self.input_buffer.pop()
+                    sys.stdout.write("\b \b")
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(char)
+                    sys.stdout.flush()
+                if char == "\n":    # enter, done
                     result = "".join(self.input_buffer)
                     self.input_buffer = []
                     return result
