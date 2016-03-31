@@ -33,7 +33,7 @@ class AsyncIO:
         assert self.output_access, "Not locked"
         self.puts(string+"\n")
         self.puts("".join(self.input_buffer))
-    def readln(self, prompt=""):
+    def readln(self):
         try:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.modified_config)
             while True:
