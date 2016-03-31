@@ -65,7 +65,8 @@ class ProcessHandler:
         signal.signal(signal.SIGINT, self.handle_exit_interrupt)
     def stop(self):
         self.running = False
-        self.callback()
+        if self.callback:
+            self.callback()
     def handle_exit_interrupt(self, signum, frame):
         signal.signal(signal.SIGINT, REAL_SIGINT)
         self.stop()
