@@ -41,7 +41,8 @@ class AsyncIO:
                 if len(char) != 1: # ascii only
                     continue
                 if ord(char) == 127: # backspace
-                    self.input_buffer.pop()
+                    if input_buffer:
+                        self.input_buffer.pop()
                     sys.stdout.write("\b \b")
                     sys.stdout.flush()
                     continue
