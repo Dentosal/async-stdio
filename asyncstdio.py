@@ -33,11 +33,8 @@ class AsyncIO:
         assert self.output_access, "Not locked"
         self.puts(string+"\n")
         self.puts("".join(self.input_buffer))
-    def alarm(self, x=None, y=None):
-        raise IOError("Timeout")
     def _getc(self):
-        signal.signal(signal.SIGALRM, self.alarm)
-        signal.alarm(1) # timeout: after 1 second, IOError("Timeout") is raised.
+        # TODO: non-blocking
         return os.read(self.fd,7)
     def readln(self):
         try:
@@ -47,7 +44,7 @@ class AsyncIO:
                 if len(char) != 1: # ascii only
                     continue
                 if ord(char) == 127: # backspace
-                    if input_buffer:
+                    if self.input_buffer:
                         self.input_buffer.pop()
                     sys.stdout.write("\b \b")
                     sys.stdout.flush()
@@ -87,14 +84,7 @@ def start(print_thread_function, readline_callback, exit_callback=None):
     thread.start()
 
     while process.running:
-        try:
-            line = asyncio.readln()
-        except IOError as error:
-            if error.message == "Timeout":
-                continue
-            else:
-                raise error
-        else:
-            readline_callback(line, asyncio, process)
+        line = asyncio.readln()
+        readline_callback(line, asyncio, process)
 
     thread.join()
