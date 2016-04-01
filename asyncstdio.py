@@ -1,8 +1,8 @@
-import threading
-import os
 import sys
+import os
 import termios
 import signal
+import threading
 REAL_SIGINT = signal.getsignal(signal.SIGINT)
 
 class AsyncIO:
@@ -33,11 +33,17 @@ class AsyncIO:
         assert self.output_access, "Not locked"
         self.puts(string+"\n")
         self.puts("".join(self.input_buffer))
+    def alarm(self, x=None, y=None):
+        raise IOError("Timeout")
+    def _getc(self):
+        signal.signal(signal.SIGALRM, self.alarm)
+        signal.alarm(1) # timeout: after 1 second, IOError("Timeout") is raised.
+        return os.read(self.fd,7)
     def readln(self):
         try:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.modified_config)
             while True:
-                char = os.read(self.fd,7)
+                char = self._getc()
                 if len(char) != 1: # ascii only
                     continue
                 if ord(char) == 127: # backspace
@@ -81,6 +87,14 @@ def start(print_thread_function, readline_callback, exit_callback=None):
     thread.start()
 
     while process.running:
-        readline_callback(asyncio.readln(), asyncio, process)
+        try:
+            line = asyncio.readln()
+        except IOError as error:
+            if error.message == "Timeout":
+                continue
+            else:
+                raise error
+        else:
+            readline_callback(line, asyncio, process)
 
     thread.join()
